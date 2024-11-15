@@ -2,53 +2,52 @@
 // C11
 
 #include <stdio.h>
-#include <string.h>
 
-#define MAX_LEN 101
+#define MAX 101
 
 typedef struct Que {
   int x;
   int y;
-  int distance;
+  int dist;
 } Que;
 
 int dx[4] = {1, -1, 0, 0};
 int dy[4] = {0, 0, -1, 1};
 
-int N;
-int map[MAX_LEN][MAX_LEN];
-int visit[MAX_LEN][MAX_LEN];
-int group[MAX_LEN][MAX_LEN];
+int n;
+int map[MAX][MAX];
+int visit[MAX][MAX];
 
-Que queue[MAX_LEN * MAX_LEN];
-int front = 0;
-int rear = 0;
+Que que[MAX*MAX];
+int front;
+int rear;
 
-void enqueue(int x, int y, int distance) {
-  queue[rear].x = x;
-  queue[rear].y = y;
-  queue[rear].distance = distance;
+void enqueue(int x, int y, int dist) {
+  que[rear].x = x;
+  que[rear].y = y;
+  que[rear].dist = dist;
   rear++;
 }
 
 Que dequeue() {
-  return queue[front++];
+  return que[front++];
 }
 
-int bfs_len(int island) {
-  front = 0;
-  rear = 0;
-  memset(visit, 0, sizeof(visit));
+int bfsdist(int island) {
+  front = 0, rear = 0;
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
+      visit[i][j] = 0;
+    }
+  }
   
-  // 섬 시작점 설정
-  for (int i=0; i<N; i++) {
-    for (int j=0; j<N; j++) {
-      if (group[i][j] == island) {
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
+      if (map[i][j] == island) {
         for (int k=0; k<4; k++) {
           int nx = i + dx[k];
           int ny = j + dy[k];
-          if (nx >= 0 && nx < N && ny >= 0 && ny < N &&
-              map[nx][ny] == 0) {
+          if (nx >= 0 && nx < n && ny >= 0 && ny < n && map[nx][ny] == 0) {
             enqueue(i,j,0);
             visit[i][j] = 1;
             break;
@@ -58,71 +57,68 @@ int bfs_len(int island) {
     }
   }
   
-  // bfs 시작
   while (front < rear) {
-    Que q = dequeue();
+    Que cur = dequeue();
     
     for (int i=0; i<4; i++) {
-      int nx = q.x + dx[i];
-      int ny = q.y + dy[i];
+      int nx = cur.x + dx[i];
+      int ny = cur.y + dy[i];
   
-      if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
-        // 다른섬에 도착하면 반환
-        if (group[nx][ny] != 0 && group[nx][ny] != island) {
-          return q.distance;
-        }
-        
+      if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
         if (map[nx][ny] == 0 && visit[nx][ny] == 0) {
           visit[nx][ny] = 1;
-          enqueue(nx, ny, q.distance+1);
+          enqueue(nx, ny, cur.dist+1);
+        }
+        
+        if (map[nx][ny] != 0 && map[nx][ny] != island) {
+          return cur.dist;
         }
       }
     }
   }
   
-  return MAX_LEN * MAX_LEN;
+  return MAX * MAX;
 }
 
-void dfs_island(int x, int y, int island) {
+void dfsisland(int x, int y, int island) {
   visit[x][y] = 1;
-  group[x][y] = island;
+  map[x][y] = island;
   
   for (int i=0; i<4; i++) {
     int nx = x + dx[i];
     int ny = y + dy[i];
     
-    if (nx >= 0 && nx < N && ny >= 0 && ny < N && 
+    if (nx >= 0 && nx < n && ny >= 0 && ny < n && 
         visit[nx][ny] == 0 && map[nx][ny] == 1) {
-      dfs_island(nx, ny, island);
+      dfsisland(nx, ny, island);
     }
   }
 }
 
 int main() {
-  scanf("%d", &N);
+  scanf("%d", &n);
   
-  for (int i=0; i<N; i++) {
-    for (int j=0; j<N; j++) {
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
       scanf("%d", &map[i][j]);
     }
   }
   
-  memset(visit, 0, sizeof(visit));
   int island = 1;
-  for (int i=0; i<N; i++) {
-    for (int j=0; j<N; j++) {
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++) {
       if (map[i][j] == 1 && visit[i][j] == 0) {
-        dfs_island(i,j,island);
+        dfsisland(i,j,island);
         island++;
       }
     }
   }
   
-  int min = MAX_LEN * MAX_LEN;
+  int min = MAX * MAX;
   for (int i=1; i<island; i++) {
-    int len = bfs_len(i);
-    if (len < min) {
-      min = len;
+    int dist = bfsdist(i);
+    if (dist < min) {
+      min = dist;
     }
   }
   printf("%d", min);
